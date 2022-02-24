@@ -1,0 +1,1 @@
+##  Arquitetura decentrazilada para armazenar arquivos de forma segura através da criptografia.
