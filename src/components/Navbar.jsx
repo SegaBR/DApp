@@ -10,6 +10,7 @@ class Navbar extends Component {
     return (
       <NavbarB bg="dark" expand="" className="navbar-dark p-0 text-monospace">
         <div className="navbar-brand col-sm-3 col-md-2 mr-0">
+        &nbsp;
           <Image roundedCircle="true" src={health} width="30" height="30" className="align-top"/>
           &nbsp; Saúde
         </div>
@@ -25,6 +26,7 @@ class Navbar extends Component {
                 {this.props.account.substring(0,8)}...{this.props.account.substring(35,42)}
               </a>
             </small>
+            &nbsp;
             { this.props.account
               ? <Image fluid="true" className='ml-2' width='30' height='30'
                   //Para fazer o Identicon (avatar) da conta do usuário

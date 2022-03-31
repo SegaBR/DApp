@@ -60,5 +60,4 @@ contract CriptDStorage {
     emit FileUploaded(fileCount, _fileHash, _fileSize, _fileType, _fileName, _fileDescription, now, msg.sender);
 
   }
-
 }

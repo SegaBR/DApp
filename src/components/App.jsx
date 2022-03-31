@@ -229,11 +229,11 @@ class App extends Component {
 
   //Envia o arquivo
   enviaArquivo = descricao => {
-    console.log("Submitting file to IPFS...")
+    console.log("Enviando Arquivo para o IPFS...")
 
     //Adiciona o arquivo ao IPFS
     ipfs.add(this.state.buffer, (error, result) => {
-      console.log('IPFS result', result.size)
+      console.log('IPFS resultado', result.size)
       if(error) {
         console.error(error)
         return
@@ -251,7 +251,7 @@ class App extends Component {
 
       //Criptografar o resultado Hash do IPFS
       result[0].hash= this.criptografarRSA(result[0].hash);
-
+      
       //Enviar para o contrato inteligente
       this.state.criptdstorage.methods.uploadFile(result[0].hash, result[0].size, this.state.type, this.state.name, descricao).send({ from: this.state.account }).on('transactionHash', (hash) => {
         this.setState({
@@ -329,7 +329,7 @@ class App extends Component {
   //Função para redenrizar os componentes
   render() {
     return (
-      <div className="bg-secondary" style={{height: '100vh'}}>
+      <div>
         <Navbar account={this.state.account} />
         { this.state.loading
           ? <div id="loader" className="text-center mt-5"><p>Loading...</p></div>

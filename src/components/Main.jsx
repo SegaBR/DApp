@@ -5,10 +5,10 @@ import Button from 'react-bootstrap/Button';
 import Table from 'react-bootstrap/Table';
 
 class Main extends Component {
-
+  
   render() {
     return (
-      <div className="container-fluid mt-5 text-center">
+      <div style={{height: '100%',flexWrap: 'wrap', display: 'flex',  justifyContent:'center', alignItems:'center', height: '50vh'}} className="container-fluid mt-5 text-center">
         <div className="row">
           <main role="main" className="col-lg-12 ml-auto mr-auto" style={{ maxWidth: '1024px' }}>
             <div className="content">
@@ -31,7 +31,8 @@ class Main extends Component {
                             placeholder="Descrição..."
                             required />
                       </div>
-                    <input type="file" onChange={this.props.capturaArquivo} className="form-control-file text-black text-monospace"/>
+                      <br></br>
+                    <input type="file" onChange={this.props.capturaArquivo} className="form-control-file text-white text-monospace"/>
                     <div>&nbsp;</div>
                     <Button type="submit"><b>Enviar!</b></Button>
                   </form>
