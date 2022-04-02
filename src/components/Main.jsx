@@ -49,6 +49,7 @@ class Main extends Component {
                     <th scope="col" style={{ width: '120px'}}>Data</th>
                     <th scope="col" style={{ width: '120px'}}>Emissor</th>
                     <th scope="col" style={{ width: '150px'}}>Hash</th>
+                    <th scope="col" style={{ width: '150px'}}>Baixar</th>
                   </tr>
                 </thead>
                 { //Map para pegar o arquivo e a chave somente do usuário atual 
@@ -78,6 +79,9 @@ class Main extends Component {
                             target="_blank">
                             {this.props.decripHashLink(file.fileHash)}
                           </a>
+                        </td>
+                        <td>
+                          <button className="btn-primary btn-block" onClick= {() => this.props.downloadArquivo("https://ipfs.infura.io/ipfs/" + this.props.decripHashLink(file.fileHash), file.fileType)}>Download</button>
                         </td>
                       </tr>
                     </thead>

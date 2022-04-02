@@ -209,6 +209,41 @@ class App extends Component {
     return decrypted;
   }
 
+  //Encrypt arquivo para o IPFS AES
+  encrypt = (text) => {
+
+    var crypto = require('crypto');
+
+    var algorithm = 'aes-256-ctr';
+    var secretKey = 'vOVH6sdmpNWjRRIqCc7rdxs01lwHzfr3';
+    var iv = crypto.randomBytes(16);
+
+    var cipher = crypto.createCipheriv(algorithm, secretKey, iv);
+
+    var encrypted = Buffer.concat([iv, cipher.update(text), cipher.final()]);
+
+    return encrypted;
+  };
+
+  //Decrypt arquivo para o IPFS AES
+  decrypt = (chunk) => {
+    var crypto = require('crypto');
+
+    var algorithm = 'aes-256-ctr';
+    var secretKey = 'vOVH6sdmpNWjRRIqCc7rdxs01lwHzfr3';
+
+    var decipher,
+    iv;
+
+    iv = chunk.slice(0, 16);
+    chunk = chunk.slice(16);
+
+    var decipher = crypto.createDecipheriv(algorithm, secretKey, iv);
+    var decrpyted = Buffer.concat([decipher.update(chunk), decipher.final()]);
+
+    return decrpyted;
+  };
+
   //Captura o arquivo do usuário
   capturaArquivo = event => {
     event.preventDefault()
@@ -231,8 +266,11 @@ class App extends Component {
   enviaArquivo = descricao => {
     console.log("Enviando Arquivo para o IPFS...")
 
+    var encryptBuffer = this.encrypt(this.state.buffer);
+    console.log("Encrypt: ",encryptBuffer);
+
     //Adiciona o arquivo ao IPFS
-    ipfs.add(this.state.buffer, (error, result) => {
+    ipfs.add(encryptBuffer, (error, result) => {
       console.log('IPFS resultado', result.size)
       if(error) {
         console.error(error)
@@ -304,6 +342,51 @@ class App extends Component {
     // return localStorage.getItem('hash');
   }
 
+  downloadArquivo = (link, type) => {
+    const axios = require('axios');
+    const reader = new window.FileReader();
+    axios({
+      url: link,
+      method: 'GET',
+      responseType: 'blob'
+      }).then((response) => {
+          console.log(response);
+          reader.readAsArrayBuffer(response.data);
+          reader.onloadend = () => {
+            var buff = Buffer(reader.result);
+            console.log('Buffer: ', buff)
+            
+            var decryptBuffer = this.decrypt(buff);
+            console.log("Decrypt: ",decryptBuffer);
+            
+            
+            var barra = type.substring(type.indexOf("/")+1, type.lenght );
+            console.log(barra);
+            if(barra=='x-zip-compressed'){
+              const url = window.URL
+              .createObjectURL(new Blob([decryptBuffer]));
+              
+              const link = document.createElement('a');
+              link.href = url;
+              link.setAttribute('download', 'download.zip');
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            }else{
+              const url = window.URL
+              .createObjectURL(new Blob([decryptBuffer]));
+              
+              const link = document.createElement('a');
+              link.href = url;
+              link.setAttribute('download', 'download.'+barra);
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            }
+        };
+      });
+  }
+
   //Construtor com as informações necessárias do contrato inteligente e da criptografia
   constructor(props) {
     super(props)
@@ -317,6 +400,9 @@ class App extends Component {
       publicKey: null,
       privateKey: null
     }
+    this.downloadArquivo = this.downloadArquivo.bind(this)
+    this.decrypt = this.decrypt.bind(this)
+    this.encrypt = this.encrypt.bind(this)
     this.enviaArquivo = this.enviaArquivo.bind(this)
     this.decripHashLink = this.decripHashLink.bind(this)
     this.capturaArquivo = this.capturaArquivo.bind(this)
@@ -334,6 +420,7 @@ class App extends Component {
         { this.state.loading
           ? <div id="loader" className="text-center mt-5"><p>Loading...</p></div>
           : <Main
+              downloadArquivo={this.downloadArquivo}
               decripHashLink={this.decripHashLink}
               files={this.state.files}
               capturaArquivo={this.capturaArquivo}
