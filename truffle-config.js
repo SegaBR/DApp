@@ -9,7 +9,9 @@ module.exports = {
     development: {
       host: "127.0.0.1",
       port: 7545,
-      network_id: "*" //Qualquer ID da rede
+      network_id: "*", //Qualquer ID da rede
+      gasPrice: 30000000000,
+      gas: 8000000
     },
     ropsten: {
       provider: function() {
@@ -18,8 +20,8 @@ module.exports = {
           `https://ropsten.infura.io/v3/${process.env.INFURA_API_KEY}`//URL de um nó no Ethereum
         )
       },
-      gas: 5000000,
-      gasPrice: 25000000000,
+      gas: 8000000,
+      gasPrice: 30000000000,
       network_id: 3
     }
   },

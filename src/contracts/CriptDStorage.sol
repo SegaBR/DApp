@@ -19,6 +19,7 @@ contract CriptDStorage {
     string fileName;
     string fileDescription;
     uint uploadTime;
+    string salt;
     address payable uploader;
   }
 
@@ -31,6 +32,7 @@ contract CriptDStorage {
     string fileName, 
     string fileDescription,
     uint uploadTime,
+    string salt,
     address payable uploader
   );
 
@@ -39,7 +41,7 @@ contract CriptDStorage {
   }
 
   //Função de upload do arquivo (HASH)
-  function uploadFile(string memory _fileHash, uint _fileSize, string memory _fileType, string memory _fileName, string memory _fileDescription) public{
+  function uploadFile(string memory _fileHash, uint _fileSize, string memory _fileType, string memory _fileName, string memory _fileDescription, string memory _salt) public{
     
     //Verifica se as informações  do hash, tipo, descrição, 
     //nome, endereço do emissor e o tamanho do arquivo existe
@@ -49,15 +51,16 @@ contract CriptDStorage {
     require(bytes(_fileName).length > 0);
     require(msg.sender!=address(0));
     require(_fileSize>0);
+    require(bytes(_salt).length>0);
 
     //Incrementa o ID do arquivo (sequence)
     fileCount ++;
 
     //Adiciona o arquivo ao contrato
-    files[fileCount] = File(fileCount, _fileHash, _fileSize, _fileType, _fileName, _fileDescription, now, msg.sender);
+    files[fileCount] = File(fileCount, _fileHash, _fileSize, _fileType, _fileName, _fileDescription, now, _salt, msg.sender);
    
     //Aciona o evento
-    emit FileUploaded(fileCount, _fileHash, _fileSize, _fileType, _fileName, _fileDescription, now, msg.sender);
+    emit FileUploaded(fileCount, _fileHash, _fileSize, _fileType, _fileName, _fileDescription, now, _salt, msg.sender);
 
   }
 }
