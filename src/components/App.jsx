@@ -185,7 +185,7 @@ class App extends Component {
 
     //Gera chave privada
     var privateKey = eccrypto.generatePrivate();
-    //Gera a chave pública apartir da privada
+    //Gera a chave pública de acordo com a privada
     var publicKey = eccrypto.getPublic(privateKey);
 
     console.log('Public: '+ publicKey);
