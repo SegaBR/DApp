@@ -185,7 +185,7 @@ class App extends Component {
 
     //Gera chave privada
     var privateKey = eccrypto.generatePrivate();
-    //Gera a chave pública de acordo com a privada
+    //Gera a chave pública apartir da privada
     var publicKey = eccrypto.getPublic(privateKey);
 
     console.log('Public: '+ publicKey);
@@ -345,7 +345,7 @@ class App extends Component {
     }
   }
   
-  encrypt = (text) => {
+  criptografarAES = (data) => {
 
     var crypto = require('crypto');
 
@@ -359,12 +359,12 @@ class App extends Component {
 
     var cipher = crypto.createCipheriv(algorithm, secretKey, iv);
 
-    var encrypted = Buffer.concat([iv, cipher.update(text), cipher.final()]);
+    var encrypted = Buffer.concat([iv, cipher.update(data), cipher.final()]);
 
     return encrypted;
   };
 
-  decrypt = (chunk, salt) => {
+  descriptografarAES = (chunk, salt) => {
     var crypto = require('crypto');
 
     var algorithm = 'aes-256-ctr';
@@ -420,7 +420,7 @@ class App extends Component {
     console.log("Enviando Arquivo para o IPFS...");
 
     /////AES/////
-    var encryptBuffer = this.encrypt(this.state.buffer);
+    var encryptBuffer = this.criptografarAES(this.state.buffer);
     console.log("Encrypt: ",encryptBuffer);
 
     /////NORMAL/////
@@ -553,7 +553,7 @@ class App extends Component {
     var forge = require('node-forge');  
     
     //AES
-    var encrypted = this.encrypt(forge.pki.privateKeyToPem(this.state.privateKey));
+    var encrypted = this.criptografarAES(forge.pki.privateKeyToPem(this.state.privateKey));
     var encodEncrypted = encrypted.toString('base64');
     
     //RSA do SALT
@@ -618,7 +618,7 @@ class App extends Component {
 
 
             //RSA//
-            var decryptBuffer = this.decrypt(buff, salt);
+            var decryptBuffer = this.descriptografarAES(buff, salt);
             console.log("Decrypt: ",decryptBuffer);
             
             var barra = type.substring(type.indexOf("/")+1, type.lenght );
@@ -1058,8 +1058,8 @@ class App extends Component {
     this.atualizarChaves = this.atualizarChaves.bind(this)
     this.downloadArquivoPerm = this.downloadArquivoPerm.bind(this)
     this.downloadArquivo = this.downloadArquivo.bind(this)
-    this.decrypt = this.decrypt.bind(this)
-    this.encrypt = this.encrypt.bind(this)
+    this.descriptografarAES = this.descriptografarAES.bind(this)
+    this.criptografarAES = this.criptografarAES.bind(this)
     this.enviaArquivo = this.enviaArquivo.bind(this)
     this.decripHashLinkPerm = this.decripHashLinkPerm.bind(this)
     this.decripHashLink = this.decripHashLink.bind(this)
