@@ -1,0 +1,254 @@
+const CriptDStorage = artifacts.require('./CriptDStorage.sol');
+
+require('chai')
+  .use(require('chai-as-promised'))
+  .should()
+
+contract('CriptDStorage', ([deployer, uploader]) => {
+  let criptdstorage
+
+  before(async () => {
+    criptdstorage = await CriptDStorage.deployed()
+  })
+
+  describe('deployment', async () => {
+    it('deploy realizado', async () => {
+      const address = await criptdstorage.address
+      assert.notEqual(address, 0x0)
+      assert.notEqual(address, '')
+      assert.notEqual(address, null)
+      assert.notEqual(address, undefined)
+    })
+
+    it('tem um nome', async () => {
+      const name = await criptdstorage.name()
+      assert.equal(name, 'CriptDStorage')
+    })
+  })
+
+  describe('arquivo', async () => {
+    let result, fileCount
+    let fileHash = 'QmV8cfu6n4NT5xRr2AHdKxFMTZEJrA44qgrBCr739BN9Wb'
+    let Hash = 'QmV8cfu6n4NT5xRr2AHdKxFMTZEJrA44qgrBCr739BN9Wb'
+    var fileSize = '15.000'
+    var fileType = 'zip'
+    var fileName = 'download'
+    var fileDescription = 'Arquivo 15 MB teste'
+    var fileSalt = 'Teste'
+    var Salt
+    var stringBuf = ''
+    const fetch = require("node-fetch");
+
+    //AES ecrypt
+    fetch('https://ipfs.infura.io/ipfs/QmRv8rp9B6NQgGFReaxWUXPVziQMPU7XQPrtfuB81qhdqU')
+    .then(async res => {
+      if(res.status !== 200)return
+      const content = await res.buffer()
+      stringBuf= Buffer.from(content);
+      console.log('Buffer: ', stringBuf);
+      // fetch('download.zip')
+      // .then( res => res.json() )
+      // .then( (data) => {
+      //   stringBuf= Buffer.From(data);
+      //   console.log('Buffer: ', stringBuf);
+      // })
+
+    var crypto = require('crypto');
+
+    var algorithm = 'aes-256-ctr'; 
+    
+    var secretKey = require('crypto').randomBytes(16).toString('hex');
+    console.log('SecretKey: '+secretKey);
+    fileSalt = secretKey;
+    Salt = secretKey;
+
+    var iv = crypto.randomBytes(16);
+
+    var cipher = crypto.createCipheriv(algorithm, secretKey, iv);
+    console.log('Buffer: ', stringBuf);
+    var encrypted = Buffer.concat([iv, cipher.update(stringBuf), cipher.final()]);
+
+    console.log("Encrypt: ",encrypted);
+
+    
+    
+    //IPFS
+
+    const ipfsClient = require('ipfs-http-client')
+    //Padrão
+    const ipfs = ipfsClient({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' }) 
+    //Adiciona o arquivo ao IPFS
+    ipfs.add(encrypted, (error, result) => {
+      console.log('IPFS resultado', result.size)
+      if(error) {
+        console.error(error)
+        return
+    }
+      fileHash =  result[0].hash;
+      Hash = result[0].hash;
+    })
+
+
+
+    var process = require('process')
+
+    //RSA
+    var forge = require('node-forge');
+    var rsa = forge.pki.rsa;
+    var keypair = rsa.generateKeyPair({bits: 2048, e: 0x10001});
+
+    //ECC
+    // var eccrypto = require("eccrypto");
+    // var privateKey = eccrypto.generatePrivate();
+    // var publicKey = eccrypto.getPublic(privateKey);
+    // var data;
+
+    before(async () => {
+      //RSA
+      fileHash =  await keypair.publicKey.encrypt(Hash);
+      fileSalt =  await keypair.publicKey.encrypt(fileSalt);
+
+      //ECC
+      // fileHash = await eccrypto.encrypt(publicKey, Buffer.from(fileHash));
+      // data = JSON.stringify({
+      //   iv: fileHash.iv.toString('hex'),
+      //   ciphertext: fileHash.ciphertext.toString('hex'),
+      //   mac: fileHash.mac.toString('hex'),
+      //   ephemPublicKey: fileHash.ephemPublicKey.toString('hex')
+      // });
+      // var forge = require('node-forge');
+      // fileHash = forge.util.encode64(data);
+
+      // fileSalt = await eccrypto.encrypt(publicKey, Buffer.from(fileSalt));
+      // data = JSON.stringify({
+      //   iv: fileSalt.iv.toString('hex'),
+      //   ciphertext: fileSalt.ciphertext.toString('hex'),
+      //   mac: fileSalt.mac.toString('hex'),
+      //   ephemPublicKey: fileSalt.ephemPublicKey.toString('hex')
+      // });
+      // var forge = require('node-forge');
+      // fileSalt = forge.util.encode64(data);
+
+      let used = process.memoryUsage().heapUsed / 1024 / 1024;
+      for (const [key,value] of Object.entries(process.memoryUsage())){
+        console.log(`Memory usage by ${key}, ${value/1000000}MB `)
+      }
+
+      console.log(`------------------------------------------------------------------`)
+
+      result = await criptdstorage.uploadFile(fileHash, fileSize, fileType, fileName, fileDescription, fileSalt, { from: uploader })
+      fileCount = await criptdstorage.fileCount()
+
+      used = process.memoryUsage().heapUsed / 1024 / 1024;
+      for (const [key,value] of Object.entries(process.memoryUsage())){
+        console.log(`Memory usage by ${key}, ${value/1000000}MB `)
+      }
+      console.log(`------------------------------------------------------------------`)
+
+    })
+
+    //Testa o evento
+    it('upload arquivo', async () => {
+      
+      //SUCESSO
+      assert.equal(fileCount, 1)
+      const event = result.logs[0].args
+      assert.equal(event.fileId.toNumber(), fileCount.toNumber(), 'Id correto')
+      
+      //RSA
+      assert.equal(keypair.privateKey.decrypt(event.fileHash), Hash, 'Hash correto')
+      assert.equal(keypair.privateKey.decrypt(event.fileSalt), Salt, 'Hash correto')
+
+      //ECC
+      // var forge = require('node-forge');
+      // var newData = forge.util.decode64(event.fileHash);
+      // let encryptedContent = JSON.parse(newData);
+      // encryptedContent = {
+      //     iv: Buffer.from(encryptedContent.iv, 'hex'),
+      //     ciphertext: Buffer.from(encryptedContent.ciphertext, 'hex'),
+      //     mac: Buffer.from(encryptedContent.mac, 'hex'),
+      //     ephemPublicKey: Buffer.from(encryptedContent.ephemPublicKey, 'hex')
+      // }
+      // var deHash = await eccrypto.decrypt(privateKey, encryptedContent);
+      // assert.equal(deHash, Hash, 'Hash correto')
+      
+      // var newData2 = forge.util.decode64(event.fileSalt);
+      // let encryptedContent2 = JSON.parse(newData2);
+      // encryptedContent2 = {
+      //     iv: Buffer.from(encryptedContent2.iv, 'hex'),
+      //     ciphertext: Buffer.from(encryptedContent2.ciphertext, 'hex'),
+      //     mac: Buffer.from(encryptedContent2.mac, 'hex'),
+      //     ephemPublicKey: Buffer.from(encryptedContent2.ephemPublicKey, 'hex')
+      // }
+      // var deSalt = await eccrypto.decrypt(privateKey, encryptedContent2);
+      // assert.equal(deSalt, Salt, 'Salt correto')
+
+
+      //Normal
+      //assert.equal(fileHash, Hash, 'Hash correto')
+      
+      //LINK
+      var link="https://ipfs.infura.io/ipfs/"+Hash;
+
+      const axios = require('axios');
+      const reader = new window.FileReader();
+      axios({
+        url: link,
+        method: 'GET',
+        responseType: 'blob'
+        }).then((response) => {
+            console.log(response);
+            reader.readAsArrayBuffer(response.data);
+            reader.onloadend = () => {
+              var buff = Buffer(reader.result);
+              console.log('Buffer: ', buff)
+              
+
+              //AES DECRYPT
+              var crypto = require('crypto');
+          
+              var algorithm = 'aes-256-ctr';
+          
+              var decipher,
+              iv;
+              // Get the iv: the first 16 bytes
+              iv = buff.slice(0, 16);
+          
+              // Get the rest
+              buff = buff.slice(16);
+          
+              // Create a decipher
+              var decipher = crypto.createDecipheriv(algorithm, Salt, iv);
+          
+              var decrpyted = Buffer.concat([decipher.update(buff), decipher.final()]);
+              console.log("Decrypt: ",decrpyted);
+          };
+      });
+
+
+      let used = process.memoryUsage().heapUsed / 1024 / 1024;
+      for (const [key,value] of Object.entries(process.memoryUsage())){
+        console.log(`Memory usage by ${key}, ${value/1000000}MB `)
+      }
+
+      assert.equal(event.fileSize, fileSize, 'Tamanho correto')
+      assert.equal(event.fileType, fileType, 'Tipo correto')
+      assert.equal(event.fileName, fileName, 'Nome correto')
+      assert.equal(event.fileDescription, fileDescription, 'Descricao correta')
+      assert.equal(event.uploader, uploader, 'Emissor correto')
+
+      //FALHA: arquivo sem hash, tamanho, tipo, nome, descrição
+      await criptdstorage.uploadFile('', fileSize, fileType, fileName, fileDescription, { from: uploader }).should.be.rejected;
+
+      await criptdstorage.uploadFile(fileHash, '', fileType, fileName, fileDescription, { from: uploader }).should.be.rejected;
+      
+      await criptdstorage.uploadFile(fileHash, fileSize, '', fileName, fileDescription, { from: uploader }).should.be.rejected;
+
+      await criptdstorage.uploadFile(fileHash, fileSize, fileType, '', fileDescription, { from: uploader }).should.be.rejected;
+      
+      await criptdstorage.uploadFile(fileHash, fileSize, fileType, fileName, '', { from: uploader }).should.be.rejected;
+    })
+    })
+    
+  })
+})
