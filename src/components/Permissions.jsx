@@ -110,8 +110,8 @@ class Permissions extends Component {
                     <th scope="col" style={{ width: '230px'}}>Adress</th>
                     <th scope="col" style={{ width: '120px'}}>FileID</th>
                     <th scope="col" style={{ width: '120px'}}>Data Envio</th>
-                    <th scope="col" style={{ width: '120px'}}>Data Inicio Perm</th>
-                    <th scope="col" style={{ width: '120px'}}>Data Fim Perm</th>
+                    <th scope="col" style={{ width: '150px'}}>Data Inicio Perm</th>
+                    <th scope="col" style={{ width: '150px'}}>Data Fim Perm</th>
                   </tr>
                 </thead>
                 { //Map para pegar o arquivo e a chave somente do usuário atual 

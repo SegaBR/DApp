@@ -48,7 +48,7 @@ class Files extends Component {
                     <th scope="col" style={{ width: '90px'}}>Tamanho</th>
                     <th scope="col" style={{ width: '120px'}}>Data</th>
                     <th scope="col" style={{ width: '120px'}}>Emissor</th>
-                    <th scope="col" style={{ width: '150px'}}>Hash (Cript. Arq.)</th>
+                    <th scope="col" style={{ width: '150px'}}>Hash</th>
                     <th scope="col" style={{ width: '150px'}}>Baixar</th>
                   </tr>
                 </thead>

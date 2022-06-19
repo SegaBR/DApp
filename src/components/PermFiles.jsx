@@ -24,9 +24,9 @@ class PermFiles extends Component {
                     <th scope="col" style={{ width: '230px'}}>Descrição</th>
                     <th scope="col" style={{ width: '120px'}}>Tipo</th>
                     <th scope="col" style={{ width: '90px'}}>Tamanho</th>
-                    <th scope="col" style={{ width: '120px'}}>Data Envio</th>
-                    <th scope="col" style={{ width: '120px'}}>Data Inicio Perm</th>
-                    <th scope="col" style={{ width: '120px'}}>Data Fim Perm</th>
+                    <th scope="col" style={{ width: '200px'}}>Data Envio</th>
+                    <th scope="col" style={{ width: '320px'}}>Data Inicio Perm</th>
+                    <th scope="col" style={{ width: '280px'}}>Data Fim Perm</th>
                     <th scope="col" style={{ width: '120px'}}>Emissor</th>
                     <th scope="col" style={{ width: '120px'}}>Hash</th>
                     <th scope="col" style={{ width: '150px'}}>Baixar</th>
