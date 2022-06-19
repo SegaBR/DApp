@@ -1,7 +1,8 @@
 import CriptDStorage from '../abis/CriptDStorage.json'
 import CriptDPermission from '../abis/CriptDPermission.json'
 import React, { Component } from 'react';
-import { BrowserRouter as Router, Switch, Route} from 'react-router-dom';
+//import { BrowserRouter as Router, Switch, Route} from 'react-router-dom';
+import { HashRouter as Router, Switch, Route} from 'react-router-dom';
 import Web3 from 'web3';
 
 import Home from './Home'

@@ -17,13 +17,13 @@ const Menu = ({account}) => (
                     <a className="nav-link active" aria-current="page" href="/">Home &nbsp;|</a>
                 </li>
                 <li className="nav-item">
-                    <a className="nav-link active" aria-current="page" href="/files">Arquivos &nbsp;|</a>
+                    <a className="nav-link active" aria-current="page" href="/#/files">Arquivos &nbsp;|</a>
                 </li>
                 <li className="nav-item">
-                    <a className="nav-link active" aria-current="page" href="/permFiles">Arquivos com Permissão &nbsp;|</a>
+                    <a className="nav-link active" aria-current="page" href="/#/permFiles">Arquivos com Permissão &nbsp;|</a>
                 </li>
                 <li className="nav-item">
-                    <a className="nav-link active" aria-current="page" href="/perms">Permissões</a>
+                    <a className="nav-link active" aria-current="page" href="/#/perms">Permissões</a>
                 </li>
             </ul>
         </div>
