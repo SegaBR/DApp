@@ -80,9 +80,9 @@ class Files extends Component {
                             {this.props.decripHashLink(file.fileHash)}
                           </a>
                         </td>
-
+                      
                         <td>
-                          <button className="btn-primary btn-block" onClick= {() => this.props.downloadArquivo("https://ipfs.infura.io/ipfs/" + this.props.decripHashLink(file.fileHash), file.fileType, file.salt)}>Download</button>
+                          <button className="btn-primary btn-block" onClick= {() => this.props.downloadArquivo("https://ipfs.infura.io/ipfs/" + this.props.decripHashLink(file.fileHash), file.fileType, file.sectKey)}>Download</button>
                         </td>
                       </tr>
                     </thead> 

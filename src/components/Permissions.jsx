@@ -17,13 +17,35 @@ class Permissions extends Component {
                   <form onSubmit={(event) => {
                     //Formulario para pegar a descrição e o arquivo
                     event.preventDefault()
+                    const des = this.descricao.value
+                    const tipo = this.tipo.value
                     const end = this.endereco.value
                     const ch = this.chave.value
                     const hsID = this.hashID.value
                     const dtPerStart = this.dataPermStart.value + ' ' + this.horaPermStart.value;
                     const dtPerEnd = this.dataPermEnd.value + ' ' + this.horaPermEnd.value;
-                    this.props.enviaPermissao(end, ch, hsID, dtPerStart, dtPerEnd)
+                    this.props.enviaPermissao(des, tipo, end, ch, hsID, dtPerStart, dtPerEnd)
                   }} >
+                      <div className="form-group">
+                        <br></br>
+                          <input
+                            id="descricaoPerm"
+                            type="text"
+                            ref={(input) => { this.descricao = input }}
+                            className="form-control text-monospace"
+                            placeholder="Descrição..."
+                            required />
+                      </div>
+                      <div className="form-group">
+                        <br></br>
+                          <input
+                            id="tipoPerm"
+                            type="text"
+                            ref={(input) => { this.tipo = input }}
+                            className="form-control text-monospace"
+                            placeholder="Tipo..."
+                            required />
+                      </div>
                       <div className="form-group">
                         <br></br>
                           <input
@@ -107,8 +129,8 @@ class Permissions extends Component {
               <Table className="border" striped bordered hover variant="dark">
                 <thead style={{ 'fontSize': '15px' }}>
                   <tr>
-                    <th scope="col" style={{ width: '230px'}}>Adress</th>
-                    <th scope="col" style={{ width: '120px'}}>FileID</th>
+                    <th scope="col" style={{ width: '230px'}}>Endereço</th>
+                    <th scope="col" style={{ width: '120px'}}>Descrição</th>
                     <th scope="col" style={{ width: '120px'}}>Data Envio</th>
                     <th scope="col" style={{ width: '150px'}}>Data Inicio Perm</th>
                     <th scope="col" style={{ width: '150px'}}>Data Fim Perm</th>
@@ -120,7 +142,7 @@ class Permissions extends Component {
                     <thead style={{ 'fontSize': '12px' }} key={key}>
                       <tr>
                         <td>{perm.permAdress}</td>
-                        <td>{perm.fileId}</td>
+                        <td>{perm.permDescription}</td>
                         <td>{moment.unix(perm.uploadTime).format('DD/MM/YY h:mm')}</td>
                         <td>{moment.unix(perm.permTimeStart/1000).format('DD/MM/YY h:mm')}</td>
                         <td>{moment.unix(perm.permTimeEnd/1000).format('DD/MM/YY h:mm')}</td>

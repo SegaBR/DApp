@@ -20,10 +20,8 @@ class PermFiles extends Component {
               <Table className="border" striped bordered hover variant="dark">
                 <thead style={{ 'fontSize': '15px' }}>
                   <tr>
-                    <th scope="col" style={{ width: '200px'}}>Nome</th>
                     <th scope="col" style={{ width: '230px'}}>Descrição</th>
-                    <th scope="col" style={{ width: '120px'}}>Tipo</th>
-                    <th scope="col" style={{ width: '90px'}}>Tamanho</th>
+                    <th scope="col" style={{ width: '230px'}}>Tipo</th>
                     <th scope="col" style={{ width: '200px'}}>Data Envio</th>
                     <th scope="col" style={{ width: '320px'}}>Data Inicio Perm</th>
                     <th scope="col" style={{ width: '280px'}}>Data Fim Perm</th>
@@ -33,44 +31,41 @@ class PermFiles extends Component {
                   </tr>
                 </thead>
                 { //Map para pegar o arquivo e a chave somente do usuário atual 
-                  this.props.files.map((file, key) => {
-                   return( this.props.perms.map((perm, keyP) => {
-                  if ((perm.permAdress === this.props.account) && (perm.fileId === this.props.identificadorArquivoPerm(file.fileHash, perm.salt, perm.userKey)) && (new Date().getTime() >= perm.permTimeStart) && (new Date().getTime() <= perm.permTimeEnd)) return(
+                  this.props.perms.map((perm, key) => {
+                  if ((perm.permAdress === this.props.account) && (new Date().getTime() >= perm.permTimeStart) && (new Date().getTime() <= perm.permTimeEnd)) return(
                     <thead style={{ 'fontSize': '12px' }} key={key}>
                       <tr>
-                        <td>{file.fileName}</td>
-                        <td>{file.fileDescription}</td>
-                        <td>{file.fileType}</td>
-                        <td>{convertBytes(file.fileSize)}</td>
-                        <td>{moment.unix(file.uploadTime).format('DD/MM/YY h:mm')}</td>
+                        <td>{perm.permDescription}</td>
+                        <td>{perm.fileType}</td>
+                        <td>{moment.unix(perm.uploadTime).format('DD/MM/YY h:mm')}</td>
                         <td>{moment.unix(perm.permTimeStart/1000).format('DD/MM/YY h:mm')}</td>
                         <td>{moment.unix(perm.permTimeEnd/1000).format('DD/MM/YY h:mm')}</td>
                         <td>
                           <a
                             //Mostar parte do endereço do emissor linkado ao etherscan
-                            href={"https://etherscan.io/address/" + file.uploader}
+                            href={"https://etherscan.io/address/" + perm.uploader}
                             rel="noopener noreferrer"
                             target="_blank">
-                            {file.uploader.substring(0,10)}...
+                            {perm.uploader.substring(0,10)}...
                           </a>
                          </td>
                         <td>
                           <a
                             //Mostar o Hash descriptografado que linka com o IPFS para ter acesso ao arquivo
-                            href={"https://ipfs.infura.io/ipfs/" + this.props.decripHashLinkPerm(file.fileHash, perm.salt, perm.userKey)}
+                            href={"https://ipfs.infura.io/ipfs/" + this.props.decripHashLink(perm.fileHash)}
                             rel="noopener noreferrer"
                             target="_blank">
-                            {this.props.decripHashLinkPerm(file.fileHash, perm.salt, perm.userKey)}
+                            {this.props.decripHashLink(perm.fileHash)}
                           </a>
                         </td>
 
-                        { <td>
-                          <button className="btn-primary btn-block" onClick= {() => this.props.downloadArquivoPerm("https://ipfs.infura.io/ipfs/" + this.props.decripHashLinkPerm(file.fileHash, perm.salt, perm.userKey), file.fileType, file.salt, perm.salt, perm.userKey)}>Download</button>
-                        </td> }
+                        <td>
+                          <button className="btn-primary btn-block" onClick= {() => this.props.downloadArquivo("https://ipfs.infura.io/ipfs/" + this.props.decripHashLink(perm.fileHash), perm.fileType, perm.sectKey)}>Download</button>
+                        </td>
                       </tr>
                     </thead> 
                   ) 
-                }))})}
+                })}
               </Table>
             </div>
           </main>

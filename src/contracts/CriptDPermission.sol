@@ -13,10 +13,11 @@ contract CriptDPermission {
   //Struct
   struct Perm{
     uint permId;
+    string permDescription;
     string permAdress;
-    string fileId;
-    string userKey;
-    string salt;
+    string fileType;
+    string fileHash;
+    string sectKey;
     uint permTimeStart;
     uint permTimeEnd;
     uint uploadTime;
@@ -26,10 +27,11 @@ contract CriptDPermission {
   //Evento
   event PermUploaded(
     uint permId,
+    string permDescription,
     string permAdress,
-    string fileId,
-    string userKey,
-    string salt,
+    string fileType,
+    string fileHash,
+    string sectKey,
     uint permTimeStart,
     uint permTimeEnd,
     uint uploadTime,
@@ -41,14 +43,15 @@ contract CriptDPermission {
   }
 
   //Função de upload da permissao
-  function uploadPerm(string memory _permAdress, string memory _fileId, string memory _userKey, string memory _salt,  uint _permTimeStart, uint _permTimeEnd) public{
+  function uploadPerm(string memory _permDescription, string memory _permAdress, string memory _fileType, string memory _fileHash, string memory _sectKey,  uint _permTimeStart, uint _permTimeEnd) public{
     
     //Verifica se as informações existem
+    require(bytes(_permDescription).length > 0);
     require(bytes(_permAdress).length > 0);
-    require(bytes(_userKey).length > 0);
-    require(bytes(_salt).length > 0);
+    require(bytes(_fileType).length > 0);
+    require(bytes(_sectKey).length > 0);
     require(msg.sender!=address(0));
-    require(bytes(_fileId).length > 0);
+    require(bytes(_fileHash).length > 0);
     require(_permTimeStart>0);
     require(_permTimeEnd>0);
 
@@ -56,10 +59,10 @@ contract CriptDPermission {
     permCount ++;
 
     //Adiciona o arquivo ao contrato
-    perms[permCount] = Perm(permCount, _permAdress, _fileId, _userKey, _salt, _permTimeStart, _permTimeEnd, now, msg.sender);
+    perms[permCount] = Perm(permCount, _permDescription, _permAdress, _fileType, _fileHash, _sectKey, _permTimeStart, _permTimeEnd, now, msg.sender);
    
     //Aciona o evento
-    emit PermUploaded(permCount, _permAdress, _fileId, _userKey, _salt, _permTimeStart, _permTimeEnd, now, msg.sender);
+    emit PermUploaded(permCount, _permDescription, _permAdress, _fileType, _fileHash, _sectKey, _permTimeStart, _permTimeEnd, now, msg.sender);
 
   }
 }

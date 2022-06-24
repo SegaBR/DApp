@@ -37,11 +37,13 @@ class App extends Component {
       })
       // this.setState({
       //  publicKey:  localStorage.getItem('publicKey'),
-      //  privateKey: localStorage.getItem('privateKey')
+      //  privateKey: localStorage.getItem('privateKey'),
+      //  chavePublica:  localStorage.getItem('chavePublica'),
+      //  chavePrivada:  localStorage.getItem('chavePrivada')
       // })
     }else{
       this.gerarChavesRSA()
-      // this.gerarChavesECC()
+      //this.gerarChavesECC()
     }
   }
 
@@ -54,7 +56,8 @@ class App extends Component {
       window.web3 = new Web3(window.web3.currentProvider)
     }
     else {
-      window.alert('Seu navegador não possui compatibilidade para o Ethereum. Recomendamos adicionar o MetaMask ao seu navegador!')
+      window.alert('Seu navegador não possui compatibilidade para o Ethereum.'+
+      'Recomendamos adicionar o MetaMask ao seu navegador!')
     }
   }
 
@@ -269,17 +272,17 @@ class App extends Component {
     return decrypted;
   }
 
-  criptografarPermECC = async (pubKey, salt)  => {
+  criptografarPermECC = async (pubKey, info)  => {
     var eccrypto = require("eccrypto");
 
-    console.log('Salt: '+salt);
+    console.log('Info: '+info);
     console.log('Public: '+ pubKey);
 
     //Pega a chave publica do State 
     var newPublicKey = Buffer.from(pubKey, 'hex');
    
     //Encripta o dado com a chave publica
-    var encrypted = await eccrypto.encrypt(newPublicKey, Buffer.from(salt));
+    var encrypted = await eccrypto.encrypt(newPublicKey, Buffer.from(info));
     
     //Gambiarra tranformando em JSON e hex
     var data = JSON.stringify({
@@ -297,36 +300,6 @@ class App extends Component {
 
     return encData;
   }
-
-  descriptografarPermECC = async (privKey, salt) => {
-    var eccrypto = require("eccrypto");
-
-    console.log('conteudo: '+salt);
-    console.log('Private: '+ privKey);
-
-    //Pega a chave privada do State
-    var newPrivateKey = Buffer.from(privKey.toString(), 'hex');
-
-    //Decode em 64 do criptHash 
-    var forge = require('node-forge');
-    var newData = forge.util.decode64(salt);
-
-    //Parse JSON do newData e destranforma de hex
-    let encryptedContent = JSON.parse(newData);
-    encryptedContent = {
-        iv: Buffer.from(encryptedContent.iv, 'hex'),
-        ciphertext: Buffer.from(encryptedContent.ciphertext, 'hex'),
-        mac: Buffer.from(encryptedContent.mac, 'hex'),
-        ephemPublicKey: Buffer.from(encryptedContent.ephemPublicKey, 'hex')
-    }
-
-    //Espera a descriptografia
-    var decrypted = await eccrypto.decrypt(newPrivateKey, encryptedContent);
-    console.log('Decriptografado: '+decrypted);
-
-    return decrypted;
-  }
-
 
   //Captura o arquivo do usuário
   capturaArquivo = event => {
@@ -485,10 +458,6 @@ class App extends Component {
         this.setState({loading: false})
       })
 
-
-
-
-
       // /////ECC/////
 
       // // Criptografar o resultado Hash do IPFS
@@ -520,18 +489,18 @@ class App extends Component {
 
       // });
 
+
+
     })
   }
 
-  enviaPermissao = (end, ch, hashID, dtPerS, dtPerE) => {
+  enviaPermissao = (des, tipo, end, ch, hashID, dtPerS, dtPerE) => {
 
     console.log("Enviando Permissao...");
     
     var tempoIni =  new Date(dtPerS).getTime();
     var tempoFim =  new Date(dtPerE).getTime();
-
-    const crypto = require('crypto');
-    const identificador = crypto.createHash('sha256').update(hashID).digest('base64');
+    var sectKey;
 
     // //////NORMAL//////
 
@@ -548,490 +517,193 @@ class App extends Component {
     //   this.setState({loading: false})
     // })
 
-
-
     ///////////////RSA///////////////////
     var forge = require('node-forge');  
-    
-    //AES
-    var encrypted = this.criptografarAES(forge.pki.privateKeyToPem(this.state.privateKey));
-    var encodEncrypted = encrypted.toString('base64');
-    
-    //RSA do SALT
-    ch = forge.pki.publicKeyFromPem(ch);
-    this.state.salt =  ch.encrypt(this.state.salt);
 
-    //Enviar para o contrato inteligente
-    this.state.criptdpermission.methods.uploadPerm(end, identificador, encodEncrypted, this.state.salt, tempoIni, tempoFim).send({ from: this.state.account }).on('transactionHash', (hash) => {
-      this.setState({
-       loading: false,
-       type: null,
-       name: null
-     })
-     window.location.reload()
-    }).on('error', (e) =>{
-      window.alert('Error')
-      this.setState({loading: false})
-    })
+    this.state.files.map((file, key) => {
+      if (file.uploader === this.state.account && hashID === this.decripHashLink(file.fileHash)){
+            sectKey = this.descriptografarRSA(file.sectKey); 
 
+            ch = forge.pki.publicKeyFromPem(ch);
+            sectKey = ch.encrypt(sectKey);
+            hashID = ch.encrypt(hashID);
+        
+            //Enviar para o contrato inteligente
+            this.state.criptdpermission.methods.uploadPerm(des, end, tipo, hashID, sectKey, tempoIni, tempoFim).send({ from: this.state.account }).on('transactionHash', (hash) => {
+              this.setState({
+               loading: false,
+               type: null,
+               name: null
+             })
+             window.location.reload()
+            }).on('error', (e) =>{
+              window.alert('Error')
+              this.setState({loading: false})
+            })
 
+            return;  
+      }
+    });
 
     // /////ECC/////
-    // //AES
-    // var encrypted = this.encrypt(localStorage.getItem('privateKey'));
-    // var encodEncrypted = encrypted.toString('base64');
+  
+    // this.state.files.map((file, key) => {
+    //   if (file.uploader === this.state.account && hashID === this.decripHashLink(file.fileHash)){
+    //         //ECC do SALT
+    //         this.descriptografarECC(file.sectKey).then( resultadoSectKey => {
+    //           console.log("resultadoSectKey: "+resultadoSectKey);
+    //           this.criptografarPermECC(ch, resultadoSectKey).then( resultadoSectKey => {
+    //             console.log("Cript resultadoSectKey: "+resultadoSectKey);
+    //             this.criptografarPermECC(ch, hashID).then( resultadoHashID => {
+    //               console.log("Cript resultadoHashID: "+resultadoHashID);
+    //               //Enviar para o contrato inteligente
+    //               this.state.criptdpermission.methods.uploadPerm(des, end, tipo, resultadoHashID, resultadoSectKey, tempoIni, tempoFim).send({ from: this.state.account }).on('transactionHash', (hash) => {
+    //                 this.setState({
+    //                 loading: false,
+    //                 type: null,
+    //                 name: null
+    //               })
+    //               window.location.reload()
+    //               }).on('error', (e) =>{
+    //                 window.alert('Error')
+    //                 this.setState({loading: false})
+    //               })
+    //             });
+    //           });
+    //         });
 
-    // //ECC do SALT
-    // this.criptografarPermECC(ch, this.state.salt).then( resultadoSalt => {
-    //   console.log("ResultadoSalt: "+resultadoSalt);
-    //   this.state.criptdpermission.methods.uploadPerm(end, identificador,  encodEncrypted, resultadoSalt, tempoIni, tempoFim).send({ from: this.state.account }).on('transactionHash', (hash) => {
-    //     this.setState({
-    //     loading: false,
-    //     type: null,
-    //     name: null
-    //   })
-    //   window.location.reload()
-    //   }).on('error', (e) =>{
-    //     window.alert('Error')
-    //     this.setState({loading: false})
-    //   })
+    //         return;  
+    //   }
     // });
 
   }
 
   downloadArquivo = (link, type, salt) => {
-    const axios = require('axios');
-    const reader = new window.FileReader();
-    axios({
-      url: link,
-      method: 'GET',
-      responseType: 'blob'
-      }).then((response) => {
-          console.log(response);
-          reader.readAsArrayBuffer(response.data);
-          reader.onloadend = () => {
-            var buff = Buffer(reader.result);
-            console.log('Buffer: ', buff)
+    try{
+      const axios = require('axios');
+      const reader = new window.FileReader();
+      axios({
+        url: link,
+        method: 'GET',
+        responseType: 'blob'
+        }).then((response) => {
+            reader.readAsArrayBuffer(response.data);
+            reader.onloadend = () => {
+              var buff = Buffer(reader.result);
+              console.log('Buffer: ', buff)
 
-            //NORMAL//
-            //var decryptBuffer = buff;
+              //NORMAL//
+              //var decryptBuffer = buff;
 
-
-
-            //RSA//
-            var decryptBuffer = this.descriptografarAES(buff, salt);
-            console.log("Decrypt: ",decryptBuffer);
-            
-            var barra = type.substring(type.indexOf("/")+1, type.lenght );
-            console.log(barra);
-            if(barra=='x-zip-compressed'){
-              const url = window.URL
-              .createObjectURL(new Blob([decryptBuffer]));
+              //RSA//
+              var decryptBuffer = this.descriptografarAES(buff, salt);
+              console.log("Decrypt: ",decryptBuffer);
               
-              const link = document.createElement('a');
-              link.href = url;
-              link.setAttribute('download', 'download.zip');
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-            }else{
-              const url = window.URL
-              .createObjectURL(new Blob([decryptBuffer]));
-              
-              const link = document.createElement('a');
-              link.href = url;
-              link.setAttribute('download', 'download.'+barra);
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-            }
-
-
-
-
-            // //ECC//
-            // this.descriptografarECC(salt).then( resultado => {
-            //   console.log("Resultado: "+resultado);
-            //   var crypto = require('crypto');
-            //   var algorithm = 'aes-256-ctr';
-            //   var secretKey = resultado;
-            //   var decipher,
-            //   iv;
-            //   // Get the iv: the first 16 bytes
-            //   iv = buff.slice(0, 16);
-        
-            //   // Get the rest
-            //   buff = buff.slice(16);
-        
-            //   // Create a decipher
-            //   var decipher = crypto.createDecipheriv(algorithm, secretKey, iv);
-        
-            //   //var decipher = crypto.createDecipheriv(algorithm, secretKey, Buffer.from(hash.iv, 'hex'));
-            
-            //   var decryptBuffer = Buffer.concat([decipher.update(buff), decipher.final()]);
-            //   console.log("Decrypt: ",decryptBuffer);
-              
-            //   var barra = type.substring(type.indexOf("/")+1, type.lenght );
-            //   console.log(barra);
-            //   if(barra=='x-zip-compressed'){
-            //     const url = window.URL
-            //     .createObjectURL(new Blob([decryptBuffer]));
+              var barra = type.substring(type.indexOf("/")+1, type.lenght );
+              console.log(barra);
+              if(barra=='x-zip-compressed'){
+                const url = window.URL
+                .createObjectURL(new Blob([decryptBuffer]));
                 
-            //     const link = document.createElement('a');
-            //     link.href = url;
-            //     link.setAttribute('download', 'download.zip');
-            //     document.body.appendChild(link);
-            //     link.click();
-            //     document.body.removeChild(link);
-            //   }else{
-            //     const url = window.URL
-            //     .createObjectURL(new Blob([decryptBuffer]));
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', 'download.zip');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+              }else{
+                const url = window.URL
+                .createObjectURL(new Blob([decryptBuffer]));
                 
-            //     const link = document.createElement('a');
-            //     link.href = url;
-            //     link.setAttribute('download', 'download.'+barra);
-            //     document.body.appendChild(link);
-            //     link.click();
-            //     document.body.removeChild(link);
-            //   }
-            // });
-        };
-      });
-  }
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', 'download.'+barra);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+              }
 
-  downloadArquivoPerm = (link, type, salt, saltUser, key) => {
-    const axios = require('axios');
-    const reader = new window.FileReader();
-
-    /////RSA/////
-    var desaltUser = this.state.privateKey.decrypt(saltUser);
-
-    var chave = Buffer.from(key, 'base64'); 
-
-    //FUNC
-    var crypto = require('crypto');
-    var algorithm = 'aes-256-ctr';
-
-    var decipher,
-    iv;
-    iv = chave.slice(0, 16);
-    chave = chave.slice(16);
-
-    var decipher = crypto.createDecipheriv(algorithm, desaltUser, iv);
-    var decrpyted = Buffer.concat([decipher.update(chave), decipher.final()]);
-    //FUNC
-
-    console.log('CHAVE: '+decrpyted);
-    var forge = require('node-forge');
-    var privKey = forge.pki.privateKeyFromPem(decrpyted);
-
-    axios({
-      url: link,
-      method: 'GET',
-      responseType: 'blob'
-      }).then((response) => {
-          console.log(response);
-          reader.readAsArrayBuffer(response.data);
-          reader.onloadend = () => {
-            var buff = Buffer(reader.result);
-            console.log('Buffer: ', buff)
-
-            //NORMAL//
-            //var decryptBuffer = buff;
-
-            //RSA//
-            var decryptSalt = privKey.decrypt(salt);
-
-            //FUNC
-            var crypto = require('crypto');
-            var algorithm = 'aes-256-ctr';
-
-            var decipher,
-            iv;
-            iv = buff.slice(0, 16);
-            buff = buff.slice(16);
-
-            var decipher = crypto.createDecipheriv(algorithm, decryptSalt, iv);
-            var decryptBuffer = Buffer.concat([decipher.update(buff), decipher.final()]);
-            console.log("Decrypt1: ",decryptBuffer);
-
-            var barra = type.substring(type.indexOf("/")+1, type.lenght );
-            console.log(barra);
-            if(barra=='x-zip-compressed'){
-              const url = window.URL
-              .createObjectURL(new Blob([decryptBuffer]));
+              // //ECC//
+              // this.descriptografarECC(salt).then( resultado => {
+              //   console.log("Resultado: "+resultado);
+              //   var crypto = require('crypto');
+              //   var algorithm = 'aes-256-ctr';
+              //   var secretKey = resultado;
+              //   var decipher,
+              //   iv;
+              //   // Get the iv: the first 16 bytes
+              //   iv = buff.slice(0, 16);
+          
+              //   // Get the rest
+              //   buff = buff.slice(16);
+          
+              //   // Create a decipher
+              //   var decipher = crypto.createDecipheriv(algorithm, secretKey, iv);
+          
+              //   //var decipher = crypto.createDecipheriv(algorithm, secretKey, Buffer.from(hash.iv, 'hex'));
               
-              const link = document.createElement('a');
-              link.href = url;
-              link.setAttribute('download', 'download.zip');
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-            }else{
-              const url = window.URL
-              .createObjectURL(new Blob([decryptBuffer]));
-              
-              const link = document.createElement('a');
-              link.href = url;
-              link.setAttribute('download', 'download.'+barra);
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-            }
-        };
-      });
-    
-
-
-
-
-
-    // /////ECC/////
-    // //AES
-    // this.descriptografarECC(saltUser).then( desaltUser => {
-    //   console.log("desaltUser: "+desaltUser);
-    //   var chave = Buffer.from(key, 'base64');
-    //   //FUNC
-    //   var crypto = require('crypto');
-    //   var algorithm = 'aes-256-ctr';
-
-    //   var decipher,
-    //   iv;
-    //   iv = chave.slice(0, 16);
-    //   chave = chave.slice(16);
-
-    //   var decipher = crypto.createDecipheriv(algorithm, desaltUser, iv);
-    //   var decrpyted = Buffer.concat([decipher.update(chave), decipher.final()]); 
-    //   var privKey = Buffer.from(decrpyted, 'hex');
-
-    //   axios({
-    //       url: link,
-    //       method: 'GET',
-    //       responseType: 'blob'
-    //       }).then((response) => {
-    //           console.log(response);
-    //           reader.readAsArrayBuffer(response.data);
-    //           reader.onloadend = () => {
-    //             var buff = Buffer(reader.result);
-    //             console.log('Buffer: ', buff);
-    
-    //             //ECC//
-    //             this.descriptografarPermECC(privKey, salt).then( desalt => {
-    //               //FUNC
-    //               var crypto = require('crypto');
-    //               var algorithm = 'aes-256-ctr';
-
-    //               var decipher,
-    //               iv;
-    //               iv = buff.slice(0, 16);
-    //               buff = buff.slice(16);
-
-    //               var decipher = crypto.createDecipheriv(algorithm, desalt, iv);
-    //               var decryptBuffer = Buffer.concat([decipher.update(buff), decipher.final()]);
-
-    //               var barra = type.substring(type.indexOf("/")+1, type.lenght );
-    //               console.log(barra);
-    //               if(barra=='x-zip-compressed'){
-    //                 const url = window.URL
-    //                 .createObjectURL(new Blob([decryptBuffer]));
-                    
-    //                 const link = document.createElement('a');
-    //                 link.href = url;
-    //                 link.setAttribute('download', 'download.zip');
-    //                 document.body.appendChild(link);
-    //                 link.click();
-    //                 document.body.removeChild(link);
-    //               }else{
-    //                 const url = window.URL
-    //                 .createObjectURL(new Blob([decryptBuffer]));
-                    
-    //                 const link = document.createElement('a');
-    //                 link.href = url;
-    //                 link.setAttribute('download', 'download.'+barra);
-    //                 document.body.appendChild(link);
-    //                 link.click();
-    //                 document.body.removeChild(link);
-    //               }
-    //             });
-    //         };
-    //       });
-    // });
-
-  }
-
-  //Função para descriptografar o Hash Link para o conteúdo no IPFS
-  decripHashLinkPerm = (hash, salt, key) => {
-    //Normal
-    //return hash;
-
-    /////RSA/////
-    var desalt = this.state.privateKey.decrypt(salt);
-
-    var chave = Buffer.from(key, 'base64'); 
-
-    //FUNC
-    var crypto = require('crypto');
-    var algorithm = 'aes-256-ctr';
-
-    var decipher,
-    iv;
-    iv = chave.slice(0, 16);
-    chave = chave.slice(16);
-
-    var decipher = crypto.createDecipheriv(algorithm, desalt, iv);
-    var decrypted = Buffer.concat([decipher.update(chave), decipher.final()]);
-    //FUNC
-
-    console.log('chave2: '+decrypted);
-    var forge = require('node-forge');
-    var privKey = forge.pki.privateKeyFromPem(decrypted);
-
-    var decryptedHash = privKey.decrypt(hash);
-    console.log('hash: '+decryptedHash);
-    return decryptedHash;
-
-
-
-
-
-    // /////ECC/////
-    // this.descriptografarECC(salt).then( desaltUser => {
-    //   console.log("desaltUser: "+desaltUser);
-    //   var chave = Buffer.from(key, 'base64');
-    //   //FUNC
-    //   var crypto = require('crypto');
-    //   var algorithm = 'aes-256-ctr';
-
-    //   var decipher,
-    //   iv;
-    //   iv = chave.slice(0, 16);
-    //   chave = chave.slice(16);
-
-    //   var decipher = crypto.createDecipheriv(algorithm, desaltUser, iv);
-    //   var decrpyted = Buffer.concat([decipher.update(chave), decipher.final()]); 
-    //   var privKey = Buffer.from(decrpyted, 'hex');
-
-    //   this.descriptografarPermECC(privKey, hash).then( dehash => {
-    //     console.log("dehash: ",dehash);
-    //     localStorage.setItem('dehash',  dehash);
-    //     return dehash;
-    //   });
-    // });
-    // return localStorage.getItem('dehash');
+              //   var decryptBuffer = Buffer.concat([decipher.update(buff), decipher.final()]);
+              //   console.log("Decrypt: ",decryptBuffer);
+                
+              //   var barra = type.substring(type.indexOf("/")+1, type.lenght );
+              //   console.log(barra);
+              //   if(barra=='x-zip-compressed'){
+              //     const url = window.URL
+              //     .createObjectURL(new Blob([decryptBuffer]));
+                  
+              //     const link = document.createElement('a');
+              //     link.href = url;
+              //     link.setAttribute('download', 'download.zip');
+              //     document.body.appendChild(link);
+              //     link.click();
+              //     document.body.removeChild(link);
+              //   }else{
+              //     const url = window.URL
+              //     .createObjectURL(new Blob([decryptBuffer]));
+                  
+              //     const link = document.createElement('a');
+              //     link.href = url;
+              //     link.setAttribute('download', 'download.'+barra);
+              //     document.body.appendChild(link);
+              //     link.click();
+              //     document.body.removeChild(link);
+              //   }
+              // });
+          };
+        }).catch(
+          function (error) {
+            return window.alert('Não foi possivel recuperar o Arquivo.\nVerifique suas chaves. \n'+error);
+          }
+        );
+    }catch (e) {
+      return '';
+    }
   }
 
   //Função para descriptografar o Hash Link para o conteúdo no IPFS
   decripHashLink = hash => {
-
-    // ////Normal////
-    //return hash;
-
-
-
-    /////RSA/////
-    var hashDescrip = this.descriptografarRSA(hash);
-    
-    return hashDescrip;
-
-
-
-    // /////ECC/////
-    // console.log("Hash para descriptografar: "+hash);
-    // this.descriptografarECC(hash).then( resultado => {
-    //   console.log("Resultado: "+resultado);
-    //   localStorage.setItem('hash',  resultado);
-    //   return resultado;
-    // });
-    // return localStorage.getItem('hash');
-  }
-
-  identificadorArquivo = hash => {
-    
-    // ////Normal////
-    //return hash;
-
-    /////RSA/////
-    var hashDescrip = this.descriptografarRSA(hash);
-
-    const crypto = require('crypto');
-    const identificador = crypto.createHash('sha256').update(hashDescrip).digest('base64');
-
-    return identificador;
-
-    // /////ECC/////
-    // console.log("Hash para descriptografar: "+hash);
-    // this.descriptografarECC(hash).then( resultado => {
-    //   console.log("Resultado: "+resultado);
-    //   const crypto = require('crypto');
-    //   const identificador = crypto.createHash('sha256').update(resultado).digest('base64');
-    //   localStorage.setItem('identificador',  identificador);
-    //   return resultado;
-    // });
-    // return localStorage.getItem('identificador');
-  }
-
-  identificadorArquivoPerm = (hash, salt, key) => {
-
-    try {
-      
+    try{
       // ////Normal////
       //return hash;
 
       /////RSA/////
-      var desalt = this.state.privateKey.decrypt(salt);
-
-      var chave = Buffer.from(key, 'base64'); 
-
-      //FUNC
-      var crypto = require('crypto');
-      var algorithm = 'aes-256-ctr';
-
-      var decipher,
-      iv;
-      iv = chave.slice(0, 16);
-      chave = chave.slice(16);
-
-      var decipher = crypto.createDecipheriv(algorithm, desalt, iv);
-      var decrypted = Buffer.concat([decipher.update(chave), decipher.final()]);
+      var hashDescrip = this.descriptografarRSA(hash);
       
-      //FUNC
-      var forge = require('node-forge');
-      var privKey = forge.pki.privateKeyFromPem(decrypted);
+      return hashDescrip;
 
-      var decryptedHash = privKey.decrypt(hash);
-      const identificador = crypto.createHash('sha256').update(decryptedHash).digest('base64');
+      // /////ECC/////
+      // console.log("Hash para descriptografar: "+hash);
+      // this.descriptografarECC(hash).then( resultado => {
+      //   console.log("Resultado: "+resultado);
+      //   localStorage.setItem('hash',  resultado);
+      //   return resultado;
+      // });
+      // return localStorage.getItem('hash');
 
-      return identificador;
 
-    //   /////ECC/////
-    //   this.descriptografarECC(salt).then( desaltUser => {
-    //   console.log("desaltUser: "+desaltUser);
-    //   var chave = Buffer.from(key, 'base64');
-    //   //FUNC
-    //   var crypto = require('crypto');
-    //   var algorithm = 'aes-256-ctr';
-
-    //   var decipher,
-    //   iv;
-    //   iv = chave.slice(0, 16);
-    //   chave = chave.slice(16);
-
-    //   var decipher = crypto.createDecipheriv(algorithm, desaltUser, iv);
-    //   var decrpyted = Buffer.concat([decipher.update(chave), decipher.final()]); 
-    //   var privKey = Buffer.from(decrpyted, 'hex');
-
-    //   this.descriptografarPermECC(privKey, hash).then( dehash => {
-    //     console.log("dehash: ",dehash);
-    //     const crypto = require('crypto');
-    //     const deid = crypto.createHash('sha256').update(dehash).digest('base64');
-    //     localStorage.setItem('deid',  deid);
-    //     return deid;
-    //   });
-    // });
-    // return localStorage.getItem('deid');
     }
     catch (e) {
-        return '';
+        return window.alert('Não foi possivel descriptografar o Hash.\nVerifique suas chaves. \n'+e);
     }
   }
 
@@ -1054,15 +726,12 @@ class App extends Component {
       chavePrivada: null
     }
 
-    this.identificadorArquivoPerm = this.identificadorArquivoPerm.bind(this)
-    this.identificadorArquivo = this.identificadorArquivo.bind(this)
     this.atualizarChaves = this.atualizarChaves.bind(this)
-    this.downloadArquivoPerm = this.downloadArquivoPerm.bind(this)
     this.downloadArquivo = this.downloadArquivo.bind(this)
     this.descriptografarAES = this.descriptografarAES.bind(this)
     this.criptografarAES = this.criptografarAES.bind(this)
     this.enviaArquivo = this.enviaArquivo.bind(this)
-    this.decripHashLinkPerm = this.decripHashLinkPerm.bind(this)
+    this.enviaPermissao = this.enviaPermissao.bind(this)
     this.decripHashLink = this.decripHashLink.bind(this)
     this.capturaArquivo = this.capturaArquivo.bind(this)
     this.criptografarRSA = this.criptografarRSA.bind(this)
@@ -1070,7 +739,6 @@ class App extends Component {
     this.criptografarECC = this.criptografarECC.bind(this)
     this.descriptografarECC = this.descriptografarECC.bind(this)
     this.criptografarPermECC = this.criptografarPermECC.bind(this)
-    this.descriptografarPermECC = this.descriptografarPermECC.bind(this)
   }
 
   render() {
@@ -1083,7 +751,6 @@ class App extends Component {
                                                   chavePublica={localStorage.getItem('chavePublica')} 
                                                   atualizarChaves={this.atualizarChaves}/>}/>
             <Route exact path="/files" render={() => <Files 
-                                                  identificadorArquivo={this.identificadorArquivo}
                                                   downloadArquivo={this.downloadArquivo}
                                                   decripHashLink={this.decripHashLink}
                                                   files={this.state.files}
@@ -1091,13 +758,13 @@ class App extends Component {
                                                   enviaArquivo={this.enviaArquivo}
                                                   account={this.state.account}/>} />
             <Route exact path="/permFiles" render={() => <PermFiles 
-                                                  identificadorArquivoPerm={this.identificadorArquivoPerm}
-                                                  downloadArquivoPerm={this.downloadArquivoPerm}
-                                                  decripHashLinkPerm={this.decripHashLinkPerm}
+                                                  downloadArquivo={this.downloadArquivo}
+                                                  decripHashLink={this.decripHashLink}
                                                   files={this.state.files}
                                                   perms={this.state.perms}
                                                   account={this.state.account}/>} />
             <Route exact path="/perms" render={() => <Permissions 
+                                                  decripHashLink={this.decripHashLink}
                                                   account={this.state.account}
                                                   perms={this.state.perms}
                                                   enviaPermissao={this.enviaPermissao}/>} />
