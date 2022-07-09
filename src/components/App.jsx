@@ -121,11 +121,11 @@ class App extends Component {
     localStorage.setItem('privateKey', chPri);
     localStorage.setItem('publicKey',   chPub);
     this.setState({
-      chavePrivada: forge.pki.privateKeyFromPem(chPri),
-      chavePublica: forge.pki.publicKeyFromPem(chPub)
+      publicKey: forge.pki.privateKeyFromPem(chPri),
+      privateKey: forge.pki.publicKeyFromPem(chPub)
     })
     window.alert('Chaves Salvas!');
-    
+
     // //////ECC/////
     // var eccrypto = require("eccrypto");
     // //Armazena provisóriamente no local storage
@@ -748,8 +748,8 @@ class App extends Component {
         <Menu account={this.state.account} />
         <Switch>
             <Route exact path="/" render={() => <Home
-                                                  chavePrivada={localStorage.getItem('chavePrivada')} 
-                                                  chavePublica={localStorage.getItem('chavePublica')} 
+                                                  chavePrivada={localStorage.getItem('privateKey')} 
+                                                  chavePublica={localStorage.getItem('publicKey')} 
                                                   atualizarChaves={this.atualizarChaves}/>}/>
             <Route exact path="/files" render={() => <Files 
                                                   downloadArquivo={this.downloadArquivo}
