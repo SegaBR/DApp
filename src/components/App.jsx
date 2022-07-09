@@ -124,7 +124,8 @@ class App extends Component {
       chavePrivada: forge.pki.privateKeyFromPem(chPri),
       chavePublica: forge.pki.publicKeyFromPem(chPub)
     })
-
+    window.alert('Chaves Salvas!');
+    
     // //////ECC/////
     // var eccrypto = require("eccrypto");
     // //Armazena provisóriamente no local storage

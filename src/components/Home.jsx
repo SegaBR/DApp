@@ -20,9 +20,9 @@ class Home extends Component {
                   <form onSubmit={(event) => {
                     //Formulario para pegar a descrição e o arquivo
                     event.preventDefault()
-                    const chavePublica = this.publicKey.value
-                    const chavePrivada = this.privateKey.value
-                    this.props.atualizarChaves(chavePublica, chavePrivada)
+                    const chavePublica2 = this.publicKey.value
+                    const chavePrivada2 = this.privateKey.value
+                    this.props.atualizarChaves(chavePublica2, chavePrivada2)
                   }} >
                       <div className="form-group">
                         <br></br>
