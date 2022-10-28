@@ -1,1 +1,1 @@
-##  Arquitetura decentrazilada para armazenar arquivos de forma segura através da criptografia.
+##  Decentralized architecture to store files securely through encryption.
